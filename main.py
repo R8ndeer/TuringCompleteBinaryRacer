@@ -1,3 +1,4 @@
+import re
 import cv2
 import numpy as np
 import mss
@@ -10,6 +11,7 @@ from matplotlib import pyplot as plt
 # ==============================================================================
 # CONFIGS (2440x1560)
 # ==============================================================================
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract'
 NUMBER_REGION = {
     'top': 734,
     'left': 1023,
@@ -26,10 +28,16 @@ def get_number_from_screen():
         img = np.array(sct.grab(NUMBER_REGION))
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         _, thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY_INV)
+
+        # '--psm' 7 for single line OCR
+        raw_text = pytesseract.image_to_string(thresh, config='--psm 7')
         
-        plt.imshow(thresh)
-        plt.title("Is this the right region?")
-        plt.show()
+        match = re.search(r'\d+', raw_text)
+        if match:
+            target = int(match.group())
+            print(f"Extracted: {target} from text: '{raw_text.strip()}'")
+        else:
+            print((f"Failed to find a number in '{raw_text.strip()}'"))
 
 
 def main():
