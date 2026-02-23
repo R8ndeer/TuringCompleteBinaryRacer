@@ -15,8 +15,8 @@ from matplotlib import pyplot as plt
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract'
 NUMBER_REGION = {
     'top': 734,
-    'left': 1023,
-    'width': 507,
+    'left': 900,
+    'width': 800,
     'height': 92
 }
 Y_BUTTON = 1413
@@ -28,7 +28,7 @@ SUBMIT_BUTTON = (1278, 1521)
 def correct_raw_text(raw_text: str) -> str:
     # match between "is ... in"
     # (.*?) captures any characters, non-greedily
-    match = re.search(r'is\s+(.*?)\s+in', raw_text, re.IGNORECASE)
+    match = re.search(r'is\s*(.*?)\s*in', raw_text, re.IGNORECASE)
     if not match:
         print(f"Format unrecoginised in raw text correction: '{raw_text.strip()}'")
         return None
@@ -41,6 +41,7 @@ def correct_raw_text(raw_text: str) -> str:
         'L': '1',
         'I': '1',
         '/': '7',
+        'f': '7',
     }
     corrected_str = ""
     for c in target_str:
