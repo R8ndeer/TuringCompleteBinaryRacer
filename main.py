@@ -1,4 +1,5 @@
 import re
+import keyboard
 import cv2
 import numpy as np
 import mss
@@ -19,8 +20,9 @@ NUMBER_REGION = {
     'height': 92
 }
 Y_BUTTON = 1413
-x_button = (724, 869, 1012, 1159, 1300, 1446, 1589, 1731)
-BUTTON_COORDS = [(x, Y_BUTTON) for x in x_button]
+X_BUTTONS = (724, 869, 1012, 1159, 1300, 1446, 1589, 1731)
+BUTTON_COORDS = [(x, Y_BUTTON) for x in X_BUTTONS]
+SUBMIT_BUTTON = (1278, 1521)
 
 
 def correct_raw_text(raw_text: str) -> str:
@@ -33,8 +35,12 @@ def correct_raw_text(raw_text: str) -> str:
     target_str = match.group(1).strip()
 
     corrections = {
+        'o': '0',
+        'O': '0',
         'l': '1',
+        'L': '1',
         'I': '1',
+        '/': '7',
     }
     corrected_str = ""
     for c in target_str:
@@ -55,7 +61,8 @@ def get_number_from_screen() -> int:
         _, thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY_INV)
 
         # '--psm' 7 for single line OCR
-        raw_text = pytesseract.image_to_string(thresh, config='--psm 7')
+        config = '--psm 7 -c tessedit_char_whitelist="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ?"'
+        raw_text = pytesseract.image_to_string(thresh, config=config)
         
         target = correct_raw_text(raw_text)
         if target:
@@ -66,13 +73,30 @@ def get_number_from_screen() -> int:
             return None
 
 
-def main():
+def play_round() -> None:
     target = get_number_from_screen()
     if not target: return
 
     binary_str = format(target, '08b')
-    print(binary_str)
+    for i, bit in enumerate(binary_str):
+        if bit == '1':
+            x, y = BUTTON_COORDS[i]
+            pyautogui.click(x, y)
+    pyautogui.click(x=SUBMIT_BUTTON[0], y=SUBMIT_BUTTON[1])
 
+
+def main():
+    trigger_key = 'e'
+    kill_key = 'esc'
+
+    print("--- Binary Racer Bot Started ---")
+    print(f"Press '{trigger_key}' to execute one round.")
+    print(f"Press '{kill_key} to exit.")
+
+    keyboard.add_hotkey(trigger_key, lambda: play_round())
+
+    keyboard.wait(kill_key)
+    print("--- Binary Racer Bot Terminated ---")
 
 if __name__ == "__main__":
     main()
